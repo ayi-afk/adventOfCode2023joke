@@ -115,18 +115,24 @@ Game 100: 1 red, 1 green, 9 blue; 6 blue, 4 green, 3 red; 4 red, 2 green; 3 gree
 
 # 1st one baby yea wonder how i could make it les and less readable :D pun intended
 print(
-    sum(n+1 for n, line in enumerate(data.split("\n")) if not any(int(num) > dict(zip(["red", "green", "blue"], [12, 13, 14]))[color] for num, color in re.findall(r'(\d+) (\w+)', line.split(": ")[1])))
+    sum(
+        n + 1
+        for n, line in enumerate(data.split("\n"))
+        if not any(
+            int(num) > dict(zip(["red", "green", "blue"], [12, 13, 14]))[color]
+            for num, color in re.findall(r"(\d+) (\w+)", line.split(": ")[1])
+        )
+    )
 )
 
 print("=== ^ first part | v 2nd part ===")
 
+
 def get_mul(line: str) -> int:
     colors = defaultdict(list)
-    for v, c in re.findall(r'(\d+) (\w+)', line.split(": ")[1]):
+    for v, c in re.findall(r"(\d+) (\w+)", line.split(": ")[1]):
         colors[c].append(int(v))
     return reduce(op.mul, (max(val) for val in colors.values()), 1)
 
-print(
-    sum(get_mul(line) for line in data.split("\n"))
-)
- 
+
+print(sum(get_mul(line) for line in data.split("\n")))

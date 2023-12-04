@@ -2,8 +2,7 @@ from devtools import debug
 import re
 
 
-input = (
-    """8eight1
+input = """8eight1
 98126
 fourfourthreehnbhkmscqxdfksg64bvpppznkh
 8fivenvvtrlj
@@ -1003,23 +1002,23 @@ eight6kxqqdnqp
 three6blrfsgdqsxgkbqj3
 eight1eighteight8
 8four419eighteight1bpv"""
-)
+
 
 def get_two_numbers_from_line(line: str) -> int:
-    nums = list(re.sub(r"[^\d]", '', line))
+    nums = list(re.sub(r"[^\d]", "", line))
     return int(f"{nums[0]}{nums[-1]}")
 
-#solution 1 done :D 3 min and needed to check if signature of sub function in google cuz didnt remember
-#but could also use .isdigit in comprehension
+
+# solution 1 done :D 3 min and needed to check if signature of sub function in google cuz didnt remember
+# but could also use .isdigit in comprehension
 print("FIRST SOLUTION:", end="")
-print(
-    sum(get_two_numbers_from_line(it) for it in input.split("\n"))
-)
-    
-#ok reading that aoc and now i know why i stopped doing it
-#yea ofcourse copy paste from aoc website ;D
+print(sum(get_two_numbers_from_line(it) for it in input.split("\n")))
+
+# ok reading that aoc and now i know why i stopped doing it
+# yea ofcourse copy paste from aoc website ;D
 numbers = "one, two, three, four, five, six, seven, eight, nine".split(", ")
-number_map = dict(zip(numbers, range(1,10)))
+number_map = dict(zip(numbers, range(1, 10)))
+
 
 def get_begning_as_number(text: str) -> int:
     for key, val in number_map.items():
@@ -1027,20 +1026,18 @@ def get_begning_as_number(text: str) -> int:
             return val
     return 0
 
+
 def get_the_the_stuff_done(line: str) -> int:
     first, last = 0, 0
     for n, l in enumerate(line):
         if l.isdigit() or (l := get_begning_as_number(line[n:])):
             first = first or l
             last = l
-            
+
     return int(f"{first}{last}")
+
 
 print(
     "GET THE STUFF DONE SOLUTION:",
-    sum(get_the_the_stuff_done(it) for it in input.split("\n"))
+    sum(get_the_the_stuff_done(it) for it in input.split("\n")),
 )
-
-
-
-    
