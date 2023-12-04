@@ -1027,7 +1027,7 @@ def get_begning_as_number(text: str) -> int:
             return val
     return 0
 
-def get_the_shit_done(line: str) -> int:
+def get_the_the_stuff_done(line: str) -> int:
     first, last = 0, 0
     for n, l in enumerate(line):
         if l.isdigit() or (l := get_begning_as_number(line[n:])):
@@ -1036,9 +1036,9 @@ def get_the_shit_done(line: str) -> int:
             
     return int(f"{first}{last}")
 
-print("GET THE SHIT DONE SOLUTION:", end="")
 print(
-    sum(get_the_shit_done(it) for it in input.split("\n"))
+    "GET THE STUFF DONE SOLUTION:",
+    sum(get_the_the_stuff_done(it) for it in input.split("\n"))
 )
 
 
