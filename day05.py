@@ -283,17 +283,27 @@ humidity-to-location map:
 
 from devtools import debug
 from dataclasses import dataclass
+from functools import cache
+from itertools import islice, chain
 
+def batched(iterable, n): # using 3.10 but it's in 3.12 by default in itertools
+    if n < 1:
+        raise ValueError('n must be at least one')
+    it = iter(iterable)
+    while batch := tuple(islice(it, n)):
+        yield batch
 
 class Map:
-    __slots__ = ["src", "dest", "src_range"]
+    __slots__ = ["src", "dest", "src_range", "dest_range"]
     
     src_range: int
+    dest_range: int
     src: int
     dest: int
     
     def __init__(self, dest:int, src: int, range_:int):
         self.src_range = range(src, src + range_)
+        self.dest_range = range(dest, dest + range_)
         self.dest = dest
         self.src = src
     
@@ -302,6 +312,11 @@ class Map:
             return value - self.src + self.dest  
         return None  # 79 -> 81
     
+    def prev(self, value: int) -> int | None:
+        if value in self.dest_range:
+            return value - self.dest + self.src
+        return None # 79 <- 81
+
     def __repr__(self):
         return f"{self.src} -> {self.dest} at {self.src_range}"
 
@@ -328,6 +343,7 @@ def hou_hou_hou(seeds: list[int], steps:list[list[Map]]) -> int:
     locations = []
 
     def get_loc(seed: int) -> int:
+        # TODO multistep cache
         nxt = seed
         for step in steps:
             for m in step:
@@ -341,11 +357,47 @@ def hou_hou_hou(seeds: list[int], steps:list[list[Map]]) -> int:
 
     return min(locations)
     
+from numba import jit
+
+
+def hle_hle_hle(seeds: list[range], steps:list[list[Map]]):
+    # totally not satisfied but a bit tires brute forced it but need to find better water
+    # maybe going other way around was not good
+    i =  46100000 # found this  60568880
+    prev = 0
+    steps.reverse()
+    while True:
+        prev = i
+        for step in steps:
+            for m in step:
+                if (n := m.prev(prev)) is not None:
+                    prev = n
+                    break
+
+        if any(prev in it for it in seeds):
+            return i
+        i += 1
+        if i % 100000 == 0:
+            print(i)
+
+
+
+
 seeds, steps = read(data)
+
+moar_seeds = []
+for a, b in batched(seeds, 2):
+    moar_seeds.append(range(a ,b+a))
+
+print(moar_seeds)
 
 print(
     "Part 1:",
     hou_hou_hou(seeds, steps)
+)
+print(
+    "Part 2:",
+    hle_hle_hle(moar_seeds, steps)
 )
 read(test)
     
