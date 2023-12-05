@@ -241,17 +241,19 @@ def here_we_go_again(data: str) -> int:
     sums_cache = {}
     processed_data = _process_data(data)
     for nn, _ in enumerate(cards):
-        for _ in range(card_counts[nn]):
-            card_idx, winning_numbers, my_numbers = processed_data[nn]
-            if card_idx not in sums_cache:  # power of caching
-                sums_cache[card_idx] = sum(
-                    int(num in winning_numbers) for num in my_numbers
-                )
-            current_sum = sums_cache[card_idx]
-            for n in range(current_sum):
-                card_counts[n + nn + 1] += 1
+        card_idx, winning_numbers, my_numbers = processed_data[nn]
+        if card_idx not in sums_cache:  # power of caching
+            sums_cache[card_idx] = sum(
+                int(num in winning_numbers) for num in my_numbers
+            )
+        current_sum = sums_cache[card_idx]
+        for n in range(current_sum * card_counts[nn]):
+            card_counts[(n % current_sum) + nn + 1] +=  1
     return sum(card_counts.values())
 
+from time import perf_counter
 
 print("Part 1: ", here_we_go(data))
-print("Part 2: ", here_we_go_again(data))  # NOT DONE YET
+s= perf_counter()
+print("pobyc :  10378710")
+print("Part 2: ", here_we_go_again(data), f" {perf_counter()-s}")  # NOT DONE YET
