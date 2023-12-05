@@ -326,19 +326,23 @@ def read(source_data: str) -> tuple[list[int], list[list[Map]]]:
         
 def hou_hou_hou(seeds: list[int], steps:list[list[Map]]) -> int:
     locations = []
-    for seed in seeds:
+
+    def get_loc(seed: int) -> int:
         nxt = seed
         for step in steps:
             for m in step:
                 if (n := m.next(nxt)) is not None:
                     nxt = n
                     break
-        locations.append(nxt)
+        return nxt
+
+    for seed in seeds:
+        locations.append(get_loc(seed))
 
     return min(locations)
     
 seeds, steps = read(data)
-# debug(steps)
+
 print(
     "Part 1:",
     hou_hou_hou(seeds, steps)
