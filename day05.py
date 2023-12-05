@@ -1,4 +1,4 @@
-data ="""seeds: 4043382508 113348245 3817519559 177922221 3613573568 7600537 773371046 400582097 2054637767 162982133 2246524522 153824596 1662955672 121419555 2473628355 846370595 1830497666 190544464 230006436 483872831
+data = """seeds: 4043382508 113348245 3817519559 177922221 3613573568 7600537 773371046 400582097 2054637767 162982133 2246524522 153824596 1662955672 121419555 2473628355 846370595 1830497666 190544464 230006436 483872831
 
 seed-to-soil map:
 4064811 506246814 25615317
@@ -247,7 +247,7 @@ humidity-to-location map:
 2402036949 270185908 35023466
 90229602 2522120710 67973174"""
 
-test="""seeds: 79 14 55 13
+test = """seeds: 79 14 55 13
 
 seed-to-soil map:
 50 98 2
@@ -285,12 +285,38 @@ from devtools import debug
 from dataclasses import dataclass
 from functools import cache
 from collections import defaultdict
-from itertools import islice, chain
-# import multiprocessing
+from itertools import islice, chain, cycle
+import time
 
-def batched(iterable, n): # using 3.10 but it's in 3.12 by default in itertools
+
+WAITING = cycle(
+    [
+        "Sorry, I am waiting for my magic wand to recharge.",
+        "The server is powered by a lemon and two electrodes.",
+        "Are we there yet?",
+        "Go get a coffee, this might take a while.",
+        "Loading, the server is working at snail speed.",
+        "Why was the computer cold at the office? It left its Windows open.",
+        "Why don’t you go play outside.",
+        "Help, I am being held prisoner inside a driver.",
+        "This is not a drill. Oh wait, it is a drill.",
+        "Reading the manual... Yeah, right!",
+        "Loading the Enigma machine.",
+        "Wait a minute, the bartender said, I need to take inventory.",
+        "Sorry we are buffering the buffer.",
+        "Just another minute. The bits are breeding.",
+        "Please wait, the program is sleeping off a heavy night.",
+        "Cleaning up process zombies.",
+        "Wait, the satellites are moving into position.",
+        "Loading anti-cyborg weaponry.",
+        "Recalibrating the internet's gravitational pull.",
+    ]
+)
+
+
+def batched(iterable, n):  # using 3.10 but it's in 3.12 by default in itertools
     if n < 1:
-        raise ValueError('n must be at least one')
+        raise ValueError("n must be at least one")
     it = iter(iterable)
     while batch := tuple(islice(it, n)):
         yield batch
@@ -309,24 +335,22 @@ def read(source_data: str) -> tuple[list[int], list[list[tuple[int, ...]]]]:
             steps.append([])
             continue
         dest, source, rng = (int(it) for it in line.split(" "))
-        steps[step_no].append(
-            (source, dest, rng)
-        )
+        steps[step_no].append((source, dest, rng))
 
     for step in steps:
         step.sort(key=lambda it: it[0])
 
     return seeds, steps
 
-def hou_hou_hou(seeds: list[int], steps:list[list[tuple[int, ...]]]) -> int:
+
+def hou_hou_hou(seeds: list[int], steps: list[list[tuple[int, ...]]]) -> int:
     locations = []
 
     def get_loc(seed: int) -> int:
-        # TODO multistep cache
         nxt = seed
         for step in steps:
             for src, dest, rng in step:
-                if  src <= nxt <= (src + rng):
+                if src <= nxt <= (src + rng):
                     nxt = nxt - src + dest
                     break
         return nxt
@@ -335,52 +359,52 @@ def hou_hou_hou(seeds: list[int], steps:list[list[tuple[int, ...]]]) -> int:
         locations.append(get_loc(seed))
 
     return min(locations)
-    
-from numba import jit    
 
-@jit
-def hle_hle_hle(seeds: list[int, int], steps2:list[list[tuple[int, ...]]]):
+
+def hle_hle_hle(seeds: list[range], steps2: list[list[tuple[int, ...]]]):
     # totally not satisfied but a bit tires brute forced it but need to find better water
     # maybe going other way around was not good
-    i =  0 # found this  60568880
+    i = 0
     prev = 0
     steps2.reverse()
+    looong_waiting = cycle(r"- \ | /".split(" "))
+    phrase = ""
     while True:
         prev = i
         for step in steps:
             # faster not calling 1 object 1000 times
             for src, dest, rng in step:
-                if  dest <= prev <= (dest + rng):
+                if dest <= prev <= (dest + rng):
                     prev = prev - dest + src
                     break
 
-        for seed in seeds:
-            if seed[0] <= prev <= seed[1]:
-                return i
-        # if any(prev in it for it in seeds):
-        #     return i
+        if any(prev in it for it in seeds):
+            print("\r", end="")
+            return i
         i += 1
-        if i % 100000 == 0:
-            print("\r", i, end="")
 
-
+        #the most important part of the code
+        if i % 50000 == 0:
+            if i % 1250000 == 0:
+                phrase = next(WAITING)
+            print("\r", next(looong_waiting), phrase + " " * (80-len(phrase)), end="")
 
 
 seeds, steps = read(data)
+moar_seeds = [range(a, b + a) for a, b in batched(seeds, 2)]
 
-moar_seeds = []
-for a, b in batched(seeds, 2):
-    moar_seeds.append((a ,b+a))
 
-print(moar_seeds)
-
+s = time.perf_counter()
 print(
     "Part 1:",
-    hou_hou_hou(seeds, steps)
+    hou_hou_hou(seeds, steps),
+    f" total time: {(time.perf_counter() - s):.4f}s",
 )
+
+s = time.perf_counter()
+# yes adding multprocseing would help but it's not really a true solution
 print(
-    "Part 2:", # 46
-    hle_hle_hle(moar_seeds, steps)
+    "Part 2:",  # 46
+    hle_hle_hle(moar_seeds, steps),
+    f" total time: {(time.perf_counter() - s):.4f}s",
 )
-read(test)
-    

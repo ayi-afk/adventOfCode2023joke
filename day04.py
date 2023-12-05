@@ -248,12 +248,13 @@ def here_we_go_again(data: str) -> int:
             )
         current_sum = sums_cache[card_idx]
         for n in range(current_sum * card_counts[nn]):
-            card_counts[(n % current_sum) + nn + 1] +=  1
+            card_counts[(n % current_sum) + nn + 1] += 1
     return sum(card_counts.values())
+
 
 from time import perf_counter
 
 print("Part 1: ", here_we_go(data))
-s= perf_counter()
+s = perf_counter()
 print("pobyc :  10378710")
 print("Part 2: ", here_we_go_again(data), f" {perf_counter()-s}")  # NOT DONE YET
