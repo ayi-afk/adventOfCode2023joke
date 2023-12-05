@@ -284,7 +284,9 @@ humidity-to-location map:
 from devtools import debug
 from dataclasses import dataclass
 from functools import cache
+from collections import defaultdict
 from itertools import islice, chain
+# import multiprocessing
 
 def batched(iterable, n): # using 3.10 but it's in 3.12 by default in itertools
     if n < 1:
@@ -293,37 +295,11 @@ def batched(iterable, n): # using 3.10 but it's in 3.12 by default in itertools
     while batch := tuple(islice(it, n)):
         yield batch
 
-class Map:
-    __slots__ = ["src", "dest", "range_"]
-    
-    src: int
-    dest: int
-    range_: int
 
-    def __init__(self, dest:int, src: int, range_:int):
-        self.dest = dest
-        self.src = src
-        self.range_ = range_
-    
-    def next(self, value: int) -> int | None:
-        if self.src <= value <= self.src + self.range_:
-            return value - self.src + self.dest  
-        return None  # 79 -> 81
-    
-    def prev(self, value: int) -> int | None:
-        if self.dest <= value <= self.dest + self.range_:
-            return value - self.dest + self.src
-        return None # 79 <- 81
-
-    def __repr__(self):
-        return f"{self.src} -> {self.dest} at {self.range_}"
-
-
-def read(source_data: str) -> tuple[list[int], list[list[Map]]]:
+def read(source_data: str) -> tuple[list[int], list[list[tuple[int, ...]]]]:
     sd = source_data.split("\n")
     seeds = [int(it) for it in sd.pop(0).split(": ")[1].split(" ")]
     steps = []
-    steps2 = []
     step_no = -1
     for line in sd:
         if not line:
@@ -331,27 +307,27 @@ def read(source_data: str) -> tuple[list[int], list[list[Map]]]:
         if line.endswith("map:"):
             step_no += 1
             steps.append([])
-            steps2.append([])
             continue
+        dest, source, rng = (int(it) for it in line.split(" "))
         steps[step_no].append(
-            Map(*[int(it) for it in line.split(" ")])
+            (source, dest, rng)
         )
-        steps2[step_no].append(
-            tuple(int(it) for it in line.split(" "))
-        )
-    # debug(steps[:2])
-    return seeds, steps, steps2
-        
-def hou_hou_hou(seeds: list[int], steps:list[list[Map]]) -> int:
+
+    for step in steps:
+        step.sort(key=lambda it: it[0])
+
+    return seeds, steps
+
+def hou_hou_hou(seeds: list[int], steps:list[list[tuple[int, ...]]]) -> int:
     locations = []
 
     def get_loc(seed: int) -> int:
         # TODO multistep cache
         nxt = seed
         for step in steps:
-            for m in step:
-                if (n := m.next(nxt)) is not None:
-                    nxt = n
+            for src, dest, rng in step:
+                if  src <= nxt <= (src + rng):
+                    nxt = nxt - src + dest
                     break
         return nxt
 
@@ -360,47 +336,41 @@ def hou_hou_hou(seeds: list[int], steps:list[list[Map]]) -> int:
 
     return min(locations)
     
-from numba import jit
+from numba import jit    
 
-
-def hle_hle_hle(seeds: list[range], steps: list[list[Map]], steps2:list[list[tuple]]):
+@jit
+def hle_hle_hle(seeds: list[int, int], steps2:list[list[tuple[int, ...]]]):
     # totally not satisfied but a bit tires brute forced it but need to find better water
     # maybe going other way around was not good
     i =  0 # found this  60568880
     prev = 0
-    steps.reverse()
-    steps.reverse()
+    steps2.reverse()
     while True:
         prev = i
-        for step in steps2:
+        for step in steps:
+            # faster not calling 1 object 1000 times
             for src, dest, rng in step:
-                print("steps2:", dest, src, rng)
                 if  dest <= prev <= (dest + rng):
                     prev = prev - dest + src
                     break
 
-        for step in steps:
-            for m in step:
-                print("steps:" ,m.src, m.dest)
-                if (n := m.prev(prev)) is not None:
-                    prev = n
-                    break
-        break
-
-        if any(prev in it for it in seeds):
-            return i
+        for seed in seeds:
+            if seed[0] <= prev <= seed[1]:
+                return i
+        # if any(prev in it for it in seeds):
+        #     return i
         i += 1
         if i % 100000 == 0:
-            print(i)
+            print("\r", i, end="")
 
 
 
 
-seeds, steps, steps2 = read(test)
+seeds, steps = read(data)
 
 moar_seeds = []
 for a, b in batched(seeds, 2):
-    moar_seeds.append(range(a ,b+a))
+    moar_seeds.append((a ,b+a))
 
 print(moar_seeds)
 
@@ -410,7 +380,7 @@ print(
 )
 print(
     "Part 2:", # 46
-    hle_hle_hle(moar_seeds, steps, steps2)
+    hle_hle_hle(moar_seeds, steps)
 )
 read(test)
     
