@@ -294,37 +294,36 @@ def batched(iterable, n): # using 3.10 but it's in 3.12 by default in itertools
         yield batch
 
 class Map:
-    __slots__ = ["src", "dest", "src_range", "dest_range"]
+    __slots__ = ["src", "dest", "range_"]
     
-    src_range: int
-    dest_range: int
     src: int
     dest: int
-    
+    range_: int
+
     def __init__(self, dest:int, src: int, range_:int):
-        self.src_range = range(src, src + range_)
-        self.dest_range = range(dest, dest + range_)
         self.dest = dest
         self.src = src
+        self.range_ = range_
     
     def next(self, value: int) -> int | None:
-        if value in self.src_range:
+        if self.src <= value <= self.src + self.range_:
             return value - self.src + self.dest  
         return None  # 79 -> 81
     
     def prev(self, value: int) -> int | None:
-        if value in self.dest_range:
+        if self.dest <= value <= self.dest + self.range_:
             return value - self.dest + self.src
         return None # 79 <- 81
 
     def __repr__(self):
-        return f"{self.src} -> {self.dest} at {self.src_range}"
+        return f"{self.src} -> {self.dest} at {self.range_}"
 
 
 def read(source_data: str) -> tuple[list[int], list[list[Map]]]:
     sd = source_data.split("\n")
     seeds = [int(it) for it in sd.pop(0).split(": ")[1].split(" ")]
     steps = []
+    steps2 = []
     step_no = -1
     for line in sd:
         if not line:
@@ -332,12 +331,16 @@ def read(source_data: str) -> tuple[list[int], list[list[Map]]]:
         if line.endswith("map:"):
             step_no += 1
             steps.append([])
+            steps2.append([])
             continue
         steps[step_no].append(
             Map(*[int(it) for it in line.split(" ")])
         )
+        steps2[step_no].append(
+            tuple(int(it) for it in line.split(" "))
+        )
     # debug(steps[:2])
-    return seeds, steps
+    return seeds, steps, steps2
         
 def hou_hou_hou(seeds: list[int], steps:list[list[Map]]) -> int:
     locations = []
@@ -360,19 +363,29 @@ def hou_hou_hou(seeds: list[int], steps:list[list[Map]]) -> int:
 from numba import jit
 
 
-def hle_hle_hle(seeds: list[range], steps:list[list[Map]]):
+def hle_hle_hle(seeds: list[range], steps: list[list[Map]], steps2:list[list[tuple]]):
     # totally not satisfied but a bit tires brute forced it but need to find better water
     # maybe going other way around was not good
-    i =  46100000 # found this  60568880
+    i =  0 # found this  60568880
     prev = 0
+    steps.reverse()
     steps.reverse()
     while True:
         prev = i
+        for step in steps2:
+            for src, dest, rng in step:
+                print("steps2:", dest, src, rng)
+                if  dest <= prev <= (dest + rng):
+                    prev = prev - dest + src
+                    break
+
         for step in steps:
             for m in step:
+                print("steps:" ,m.src, m.dest)
                 if (n := m.prev(prev)) is not None:
                     prev = n
                     break
+        break
 
         if any(prev in it for it in seeds):
             return i
@@ -383,7 +396,7 @@ def hle_hle_hle(seeds: list[range], steps:list[list[Map]]):
 
 
 
-seeds, steps = read(data)
+seeds, steps, steps2 = read(test)
 
 moar_seeds = []
 for a, b in batched(seeds, 2):
@@ -396,8 +409,8 @@ print(
     hou_hou_hou(seeds, steps)
 )
 print(
-    "Part 2:",
-    hle_hle_hle(moar_seeds, steps)
+    "Part 2:", # 46
+    hle_hle_hle(moar_seeds, steps, steps2)
 )
 read(test)
     
