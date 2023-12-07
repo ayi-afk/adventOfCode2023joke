@@ -281,7 +281,6 @@ humidity-to-location map:
 60 56 37
 56 93 4"""
 
-from devtools import debug
 from dataclasses import dataclass
 from functools import cache
 from collections import defaultdict
@@ -388,6 +387,7 @@ def hle_hle_hle(seeds: list[range], steps2: list[list[tuple[int, ...]]]):
             if i % 1250000 == 0:
                 phrase = next(WAITING)
             print("\r", next(looong_waiting), phrase + " " * (80-len(phrase)), end="")
+
 
 
 seeds, steps = read(data)
